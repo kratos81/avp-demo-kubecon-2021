@@ -28,16 +28,17 @@ spec:
             - |
               sleep 10s &&\
 
-              printf 'path "secret/*"{\ncapabilities=["read"]\n}' | vault policy write demo-policy - &&\
-
+              printf 'path "secret/*"{\ncapabilities=["read"]\n}' | vault policy write argo - &&\
               vault auth enable kubernetes &&\
               vault write auth/kubernetes/config\
-                kubernetes_host=https://kubernetes.docker.internal:6443 \
+                kubernetes_host='https://$KUBERNETES_PORT_443_TCP_ADDR:443' \
                 disable_iss_validation=true &&\
+                kubernetes_ca_cert=@/var/run/secrets/kubernetes.io/serviceaccount/ca.crt\
+
               vault write auth/kubernetes/role/argocd \
-                bound_service_account_names=default \
-                bound_service_account_namespaces=default \
-                policies="demo-policy"
+                bound_service_account_names=argocd-server \
+                bound_service_account_namespaces=argocd \
+                policies="argocd"
   syncPolicy:
     automated:
       prune: true
